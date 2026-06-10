@@ -58,7 +58,6 @@ cd learning-report
   ],
   "narrative": {
     "headline": "한 줄 요약",
-    "strongest_axis": "지금 가장 깊게 파고 있는 것 한 줄",
     "themes": [{ "title": "...", "summary": "...", "points": ["...", "..."] }]
   }
 }
@@ -88,7 +87,7 @@ cd learning-report
 |---|---|
 | `reading` | **2문장, 약 90자 이내.** 관찰 1 + 질문 1 |
 | `feedback` | **1문장, 약 45자 이내.** 행동 하나 |
-| `narrative.headline` / `strongest_axis` | **1문장** |
+| `narrative.headline` | **1문장** |
 | `narrative.themes[].title` | 한 구절(약 20자) |
 | `narrative.themes[].summary` | **1문장, 약 50자** |
 | `narrative.themes[].points` | 단어/짧은 구 **3~5개** |
