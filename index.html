@@ -38,8 +38,9 @@
       color-scheme: light dark;
     }
 
+    /* 다크 팔레트 — 시스템 설정(수동 override 없을 때) + 수동 data-theme=dark */
     @media (prefers-color-scheme: dark) {
-      :root {
+      :root:not([data-theme="light"]) {
         --bg: #191919;
         --text: #e6e6e4;
         --text-light: #9b9a97;
@@ -61,6 +62,29 @@
         --neutral-bg: #262624;
         --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(0, 0, 0, 0.3);
       }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #191919;
+      --text: #e6e6e4;
+      --text-light: #9b9a97;
+      --text-faint: #6c6b67;
+      --border: #2e2e2c;
+      --border-strong: #474743;
+      --subtle: #222220;
+      --hover: #2a2a28;
+      --accent: #5ba3e6;
+      --up: #5cab85;
+      --up-bg: #1e2b25;
+      --down: #dc9145;
+      --down-bg: #2d2417;
+      --faded: #e16860;
+      --faded-bg: #2e1d1c;
+      --new: #5ba3e6;
+      --new-bg: #1a2733;
+      --neutral: #8f8c87;
+      --neutral-bg: #262624;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(0, 0, 0, 0.3);
     }
 
     * {
@@ -167,15 +191,14 @@
       margin-bottom: 20px;
     }
 
-    /* ── Analysis summary ───────────────────────── */
+    /* ── Notion callout (analysis / result) ─────── */
     .summary {
       display: flex;
-      gap: 13px;
+      gap: 12px;
       background: var(--subtle);
       border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
       border-radius: 8px;
-      padding: 16px 18px;
+      padding: 16px 16px;
       margin-bottom: 36px;
     }
 
@@ -356,20 +379,54 @@
       color: var(--text-light);
     }
 
-    /* result strip after submit */
+    /* result strip after submit — Notion callout */
     .result-strip {
+      display: flex;
+      gap: 12px;
       border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
       border-radius: 8px;
-      padding: 16px 18px;
+      padding: 16px 16px;
       margin-bottom: 36px;
       background: var(--subtle);
+    }
+
+    .result-body {
+      flex: 1;
+    }
+
+    .result-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 11px;
+    }
+
+    .hide-btn {
+      font-family: inherit;
+      font-size: 12.5px;
+      color: var(--text-light);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 11px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .hide-btn:hover {
+      background: var(--hover);
+      color: var(--text);
+    }
+
+    .result-detail[hidden] {
+      display: none;
     }
 
     .result-score {
       font-size: 15px;
       font-weight: 700;
-      margin-bottom: 11px;
     }
 
     .result-score .ok {
@@ -676,6 +733,23 @@
       display: block;
     }
 
+    .spark .rise {
+      stroke: var(--up);
+      fill: none;
+    }
+    .spark .fall {
+      stroke: var(--down);
+      fill: none;
+    }
+    .spark circle.rise {
+      fill: var(--up);
+      stroke: none;
+    }
+    .spark circle.fall {
+      fill: var(--down);
+      stroke: none;
+    }
+
     /* ── Reflection callout ─────────────────────── */
     .callout {
       margin-top: 44px;
@@ -773,6 +847,156 @@
       color: var(--text);
     }
 
+    /* ── Narrative (자세히 보기) ─────────────────── */
+    .narrative {
+      margin-top: 44px;
+      border-top: 1px solid var(--border);
+    }
+
+    .narrative > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      user-select: none;
+    }
+
+    .narrative > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .narrative > summary .caret {
+      color: var(--text-faint);
+      font-size: 11px;
+      transition: transform 0.2s ease;
+    }
+
+    .narrative[open] > summary .caret {
+      transform: rotate(90deg);
+    }
+
+    .narrative > summary .sub {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-faint);
+      margin-left: 2px;
+    }
+
+    .narrative-body {
+      padding: 4px 4px 8px;
+    }
+
+    .nv-callout {
+      display: flex;
+      gap: 12px;
+      background: var(--subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 16px;
+      margin-bottom: 24px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.55;
+    }
+
+    .theme {
+      margin-bottom: 22px;
+    }
+
+    .theme-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .theme-title .n {
+      color: var(--text-faint);
+      font-size: 13px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .theme-summary {
+      font-size: 13.5px;
+      color: var(--text-light);
+      line-height: 1.62;
+      margin-bottom: 10px;
+    }
+
+    .theme-points {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .point {
+      font-size: 12px;
+      color: var(--text-light);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px 9px;
+    }
+
+    .nv-axis {
+      display: flex;
+      gap: 12px;
+      background: var(--new-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 16px;
+      margin-top: 10px;
+    }
+
+    .nv-axis .axis-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      margin-bottom: 5px;
+    }
+
+    .nv-axis .axis-text {
+      font-size: 14.5px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    /* ── Theme toggle ───────────────────────────── */
+    .theme-toggle {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 50;
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 17px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .theme-toggle:hover {
+      background: var(--subtle);
+      border-color: var(--border-strong);
+    }
+
     /* ── load reveal ────────────────────────────── */
     .reveal {
       opacity: 0;
@@ -825,6 +1049,7 @@
   </style>
 </head>
 <body>
+  <button class="theme-toggle" id="themeToggle" aria-label="라이트/다크 전환" title="라이트/다크 전환"></button>
   <div id="root" class="page"></div>
 
   <script>
@@ -866,13 +1091,11 @@
       });
       const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
       const last = pts[pts.length - 1];
-      const rising = trend[trend.length - 1] >= trend[0];
-      const dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const col = rising ? (dark ? "#5cab85" : "#448361") : (dark ? "#dc9145" : "#d9730d");
+      const cls = trend[trend.length - 1] >= trend[0] ? "rise" : "fall";
       return (
         '<svg class="spark" viewBox="0 0 ' + w + " " + h + '" preserveAspectRatio="none">' +
-        '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>' +
-        '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="2.4" fill="' + col + '"/>' +
+        '<path class="' + cls + '" d="' + d + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>' +
+        '<circle class="' + cls + '" cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="2.4"/>' +
         "</svg>"
       );
     }
@@ -970,9 +1193,7 @@
         return { q, sel, ok };
       });
       const allRight = score === qs.length;
-      return (
-        '<div class="result-strip reveal">' +
-        '<div class="result-score">' + qs.length + "개 중 <span class=\"" + (allRight ? "ok" : "") + '">' + score + "개</span> 예측 적중</div>" +
+      const detail =
         items
           .map(
             (it) =>
@@ -985,8 +1206,44 @@
           .join("") +
         (allRight
           ? '<div class="result-note">자기 학습 흐름을 정확히 보고 있습니다.</div>'
-          : '<div class="result-note">빗나간 항목이 지금 당신이 못 보고 있던 자리입니다. 거기서부터 한 번 들여다보세요.</div>') +
-        "</div>"
+          : '<div class="result-note">빗나간 항목이 지금 당신이 못 보고 있던 자리입니다. 거기서부터 한 번 들여다보세요.</div>');
+      return (
+        '<div class="result-strip reveal">' +
+        '<span class="summary-icon">🎯</span>' +
+        '<div class="result-body">' +
+        '<div class="result-head">' +
+        '<div class="result-score">' + qs.length + "개 중 <span class=\"" + (allRight ? "ok" : "") + '">' + score + "개</span> 예측 적중</div>" +
+        '<button class="hide-btn" id="resultHide">숨기기</button>' +
+        "</div>" +
+        '<div class="result-detail">' + detail + "</div>" +
+        "</div></div>"
+      );
+    }
+
+    function narrativeHtml(nv) {
+      if (!nv || !nv.themes || !nv.themes.length) return "";
+      const themes = nv.themes
+        .map(
+          (t, i) =>
+            '<div class="theme">' +
+            '<div class="theme-title"><span class="n">' + (i + 1) + ".</span> " + esc(t.title) + "</div>" +
+            (t.summary ? '<div class="theme-summary">' + esc(t.summary) + "</div>" : "") +
+            (t.points && t.points.length
+              ? '<div class="theme-points">' + t.points.map((p) => '<span class="point">' + esc(p) + "</span>").join("") + "</div>"
+              : "") +
+            "</div>"
+        )
+        .join("");
+      return (
+        '<details class="narrative">' +
+        '<summary><span class="caret">▶</span>자세히 보기<span class="sub">· 지난 한 주 학습 서사 ' + nv.themes.length + "가지</span></summary>" +
+        '<div class="narrative-body">' +
+        (nv.headline ? '<div class="nv-callout"><span class="summary-icon">💡</span><div>' + esc(nv.headline) + "</div></div>" : "") +
+        themes +
+        (nv.strongest_axis
+          ? '<div class="nv-axis"><span class="summary-icon">🧭</span><div><div class="axis-label">지금 가장 강한 축</div><div class="axis-text">' + esc(nv.strongest_axis) + "</div></div></div>"
+          : "") +
+        "</div></details>"
       );
     }
 
@@ -1106,7 +1363,8 @@
         '<div class="section-head"><h2 class="section-title">토픽 변화량</h2></div>' +
         '<p class="section-desc">' + baseDef + "</p>" +
         sortHtml +
-        '<div class="drift" id="drift"></div>';
+        '<div class="drift" id="drift"></div>' +
+        narrativeHtml(data.narrative);
 
       document.getElementById("root").innerHTML =
         '<span class="doc-icon reveal">📊</span>' +
@@ -1141,6 +1399,14 @@
       function reveal(stripHtml) {
         document.getElementById("gate").innerHTML = stripHtml || "";
         document.getElementById("report").hidden = false;
+        const hideBtn = document.getElementById("resultHide");
+        if (hideBtn) {
+          hideBtn.addEventListener("click", () => {
+            const d = document.querySelector(".result-detail");
+            d.hidden = !d.hidden;
+            hideBtn.textContent = d.hidden ? "결과 보기" : "숨기기";
+          });
+        }
         renderRows("drift", true);
       }
 
@@ -1169,7 +1435,35 @@
         "<p style='margin-top:16px'>로컬에서 열 때는 정적 서버로 실행하세요:<br/><br/><code>python3 -m http.server 8080</code></p></div>";
     }
 
+    function currentlyDark() {
+      const t = document.documentElement.getAttribute("data-theme");
+      if (t) return t === "dark";
+      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+
+    function initTheme() {
+      const btn = document.getElementById("themeToggle");
+      let saved = null;
+      try {
+        saved = localStorage.getItem("lr-theme");
+      } catch (e) {}
+      if (saved === "dark" || saved === "light") document.documentElement.setAttribute("data-theme", saved);
+      const sync = () => {
+        btn.textContent = currentlyDark() ? "☀️" : "🌙";
+      };
+      sync();
+      btn.addEventListener("click", () => {
+        const next = currentlyDark() ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        try {
+          localStorage.setItem("lr-theme", next);
+        } catch (e) {}
+        sync();
+      });
+    }
+
     async function boot() {
+      initTheme();
       // report.json(참여자 실데이터)을 먼저, 없으면 sample.json(데모)
       for (const path of ["./data/report.json", "./data/sample.json"]) {
         try {
