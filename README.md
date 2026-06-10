@@ -1,3 +1,7 @@
+> [!IMPORTANT]
+> 이 저장소는 [learning-templates](https://github.com/imakerjun/learning-templates) 모노레포로 이전되었습니다.
+> 최신 버전: `learning-templates/learning-report/`
+
 # 📊 learning-report
 
 내 학습이 **어디로 움직이고 있는가**를 한 장으로 보는 노션 스타일 대시보드 템플릿.
