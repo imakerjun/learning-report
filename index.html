@@ -918,9 +918,9 @@
     }
 
     .theme-title .n {
-      color: var(--text-faint);
-      font-size: 13px;
-      font-weight: 600;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
       flex-shrink: 0;
     }
 
@@ -1241,7 +1241,7 @@
         (nv.headline ? '<div class="nv-callout"><span class="summary-icon">💡</span><div>' + esc(nv.headline) + "</div></div>" : "") +
         themes +
         (nv.strongest_axis
-          ? '<div class="nv-axis"><span class="summary-icon">🧭</span><div><div class="axis-label">지금 가장 강한 축</div><div class="axis-text">' + esc(nv.strongest_axis) + "</div></div></div>"
+          ? '<div class="nv-axis"><span class="summary-icon">🧭</span><div><div class="axis-label">지금 가장 깊게 파고 있는 것</div><div class="axis-text">' + esc(nv.strongest_axis) + "</div></div></div>"
           : "") +
         "</div></details>"
       );
