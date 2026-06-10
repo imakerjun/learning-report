@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "owner": "임동준",
+    "current_week": "2026-W23",
+    "baseline_label": "직전 4주 평균",
+    "baseline_weeks": 4,
+    "generated_at": "2026-06-10",
+    "source": "wmakerjun 저장소 git 히스토리 + 메모리 + 산출물 텍스트"
+  },
+  "signals": {
+    "learning_strength": {
+      "value": 0.72,
+      "label": "강함",
+      "delta": 0.15,
+      "hint": "이번주 새 토픽 등장·구조 변경 비율이 베이스라인 대비 상승"
+    },
+    "weekly_change": {
+      "value": 0.41,
+      "hint": "토픽 분포가 직전 4주 평균에서 얼마나 이동했는가 (0=정지, 1=완전 이동)"
+    },
+    "new_topics": 2,
+    "faded_topics": 2
+  },
+  "topics": [
+    { "name": "레벨2 미션 설계", "current": 28, "baseline_avg": 12, "trend": [9, 11, 14, 14, 28] },
+    { "name": "책 5장 (AI시대 개발자)", "current": 19, "baseline_avg": 0, "trend": [0, 0, 0, 0, 19] },
+    { "name": "KCJ Read Less & Write Alive", "current": 16, "baseline_avg": 0, "trend": [0, 0, 0, 0, 16] },
+    { "name": "인프런 AI 챌린지", "current": 9, "baseline_avg": 8, "trend": [7, 9, 8, 8, 9] },
+    { "name": "자산화 WG", "current": 4, "baseline_avg": 15, "trend": [18, 16, 14, 12, 4] },
+    { "name": "크루 대시보드", "current": 3, "baseline_avg": 22, "trend": [25, 24, 20, 19, 3] },
+    { "name": "강의 발표자 노트", "current": 0, "baseline_avg": 18, "trend": [20, 19, 18, 15, 0] },
+    { "name": "삼성SDS 워크숍", "current": 0, "baseline_avg": 11, "trend": [13, 12, 10, 9, 0] }
+  ],
+  "reflection": {
+    "agent_question": "이번주 0이 된 '강의 발표자 노트'(직전 4주 평균 18회)는 의도한 깊이 전환인가, 놓친 부분인가?",
+    "user_answer": ""
+  }
+}
