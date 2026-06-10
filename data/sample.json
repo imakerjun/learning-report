@@ -7,6 +7,10 @@
     "generated_at": "2026-06-10",
     "source": "wmakerjun 저장소 git 히스토리 + 메모리 + 산출물 텍스트"
   },
+  "last_week": {
+    "step": "시작 전 5분, 직전에 배운 걸 자료 없이 3줄로 다시 써보기",
+    "note": "지난주 스스로 정한 한 걸음입니다. 했나요? 못 했다면, 그게 이번주 첫 후보입니다."
+  },
   "topics": [
     { "name": "레벨2 미션 설계", "current": 28, "baseline_avg": 12, "trend": [9, 11, 14, 14, 28] },
     { "name": "책 5장 (AI시대 개발자)", "current": 19, "baseline_avg": 0, "trend": [0, 0, 0, 0, 19] },

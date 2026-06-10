@@ -271,6 +271,132 @@
       margin-bottom: 6px;
     }
 
+    /* ── Last week continuity ───────────────────── */
+    .last-week {
+      display: flex;
+      gap: 12px;
+      background: var(--subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 16px;
+      margin-bottom: 28px;
+    }
+
+    .last-week .lw-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 6px;
+    }
+
+    .last-week .lw-step {
+      font-size: 14.5px;
+      font-weight: 600;
+      line-height: 1.5;
+      margin-bottom: 7px;
+    }
+
+    .last-week .lw-note {
+      font-size: 13px;
+      color: var(--text-light);
+      line-height: 1.55;
+    }
+
+    /* ── Interpretation gate (KCJ: 먼저 내 읽기) ──── */
+    .interp-prompt {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px 22px 20px;
+      background: var(--subtle);
+      margin-bottom: 36px;
+    }
+
+    .interp-kicker {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .interp-q {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 7px;
+    }
+
+    .interp-desc {
+      font-size: 13.5px;
+      color: var(--text-light);
+      line-height: 1.58;
+      margin-bottom: 16px;
+    }
+
+    .interp-input {
+      width: 100%;
+      min-height: 84px;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      resize: vertical;
+      transition: border-color 0.15s ease;
+    }
+
+    .interp-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .interp-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    /* 내 읽기 (제출 후) */
+    .my-reading {
+      display: flex;
+      gap: 12px;
+      background: var(--new-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 16px;
+      margin-bottom: 14px;
+    }
+
+    .my-reading .mr-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .my-reading .mr-text {
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    .compare-hint {
+      font-size: 13px;
+      color: var(--text-light);
+      margin-bottom: 16px;
+      line-height: 1.55;
+    }
+
     /* ── Notion callout (analysis / result) ─────── */
     .summary {
       display: flex;
@@ -1300,6 +1426,43 @@
       );
     }
 
+    function lastWeekHtml(lw) {
+      if (!lw || !lw.step) return "";
+      return (
+        '<div class="last-week reveal" style="animation-delay:0.1s">' +
+        '<span class="summary-icon">📌</span><div>' +
+        '<div class="lw-label">지난주 한 걸음</div>' +
+        '<div class="lw-step">' + esc(lw.step) + "</div>" +
+        '<div class="lw-note">' + esc(lw.note || "했나요? 안 했다면, 그게 이번주 첫 후보입니다.") + "</div>" +
+        "</div></div>"
+      );
+    }
+
+    function interpGateHtml() {
+      return (
+        '<div class="interp-prompt reveal" id="interpPrompt">' +
+        '<div class="interp-kicker">렌즈 열기 전에</div>' +
+        '<div class="interp-q">당신이라면 이 데이터를 어떻게 읽겠어요?</div>' +
+        '<div class="interp-desc">위 변화에서 당신이 읽은 걸 먼저 한 줄 적어보세요. 전문가 렌즈는 그 다음에 열립니다. 내 읽기와 렌즈의 차이가 곧 자라는 자리입니다.</div>' +
+        '<textarea class="interp-input" id="interpInput" placeholder="예: 레벨2에 너무 쏠려서 나머지를 놓친 것 같다…"></textarea>' +
+        '<div class="interp-actions">' +
+        '<button class="submit-btn" id="interpSubmit">내 읽기 쓰고 렌즈 열기</button>' +
+        '<button class="skip-link" id="interpSkip">그냥 렌즈 볼게요</button>' +
+        "</div></div>"
+      );
+    }
+
+    function myReadingHtml(text) {
+      return (
+        '<div class="my-reading reveal">' +
+        '<span class="summary-icon">✍️</span><div>' +
+        '<div class="mr-label">내 읽기</div>' +
+        '<div class="mr-text">' + esc(text) + "</div>" +
+        "</div></div>" +
+        '<div class="compare-hint">아래 전문가 렌즈와 비교해보세요. 무엇이 같고, 무엇이 달랐나요?</div>'
+      );
+    }
+
     function lensesHtml(readings) {
       if (!readings || !readings.length) return "";
       const tabs = readings
@@ -1462,17 +1625,25 @@
       const qs = skipGate ? [] : buildQuiz(topics);
       const gated = !skipGate && qs.length > 0;
 
-      // 다중 관점 readings가 있으면 그것을, 없으면 계산된 분석 단락(fallback)
+      // 다중 관점 readings — 차트를 본 뒤(데이터) 해석 게이트를 거쳐 열린다
       const readings = data.readings;
-      const topHtml = readings && readings.length ? lensesHtml(readings) : summaryHtml;
+      const hasReadings = readings && readings.length > 0;
+      // 해석 게이트: reveal 모드가 아니고 readings가 있으면 '내 읽기' 먼저
+      const interpGated = !skipGate && hasReadings;
+
+      const lensSection = hasReadings
+        ? '<div id="interpZone">' + (interpGated ? interpGateHtml() : "") + "</div>" +
+          '<div id="lensZone"' + (interpGated ? " hidden" : "") + ">" + lensesHtml(readings) + "</div>"
+        : "";
 
       const reportHtml =
-        topHtml +
+        (hasReadings ? "" : summaryHtml) +
         '<div class="kpi-grid">' + kpiHtml + "</div>" +
         '<div class="section-head"><h2 class="section-title">토픽 변화량</h2></div>' +
         '<p class="section-desc">' + baseDef + "</p>" +
         sortHtml +
         '<div class="drift" id="drift"></div>' +
+        lensSection +
         narrativeHtml(data.narrative);
 
       document.getElementById("root").innerHTML =
@@ -1486,6 +1657,7 @@
         '<span class="chip">생성 ' + esc(m.generated_at || "") + "</span>" +
         "</div>" +
         '<hr class="divider" />' +
+        lastWeekHtml(data.last_week) +
         '<div id="gate">' + (gated ? quizHtml(qs) : "") + "</div>" +
         '<div id="report"' + (gated ? " hidden" : "") + ">" + reportHtml + "</div>" +
         '<div class="footer reveal" style="animation-delay:0.55s">' +
@@ -1523,6 +1695,20 @@
             document.querySelectorAll(".lens-tab").forEach((x) => x.classList.toggle("active", x === b));
           });
         });
+      }
+
+      // ── 해석 게이트: 내 읽기 먼저, 그다음 렌즈 ──
+      if (interpGated) {
+        const openLenses = (myText) => {
+          const zone = document.getElementById("interpZone");
+          zone.innerHTML = myText ? myReadingHtml(myText) : "";
+          document.getElementById("lensZone").hidden = false;
+        };
+        document.getElementById("interpSubmit").addEventListener("click", () => {
+          const v = document.getElementById("interpInput").value.trim();
+          openLenses(v);
+        });
+        document.getElementById("interpSkip").addEventListener("click", () => openLenses(""));
       }
 
       function reveal(stripHtml) {
