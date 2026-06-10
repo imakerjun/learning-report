@@ -212,6 +212,194 @@
       font-weight: 600;
     }
 
+    /* ── Quiz gate ──────────────────────────────── */
+    .quiz {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px 24px 20px;
+      background: var(--subtle);
+      margin-bottom: 8px;
+    }
+
+    .quiz-kicker {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .quiz-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 7px;
+    }
+
+    .quiz-intro {
+      font-size: 13.5px;
+      color: var(--text-light);
+      line-height: 1.58;
+      margin-bottom: 22px;
+    }
+
+    .q {
+      margin-bottom: 20px;
+    }
+
+    .q-text {
+      font-size: 14.5px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .q-opts {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .opt {
+      font-family: inherit;
+      text-align: left;
+      font-size: 13.5px;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 10px 13px;
+      cursor: pointer;
+      transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .opt:hover:not(:disabled) {
+      border-color: var(--border-strong);
+      background: var(--hover);
+    }
+
+    .opt.selected {
+      border-color: var(--accent);
+      background: var(--new-bg);
+      font-weight: 600;
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    .opt .mark {
+      margin-left: auto;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .opt.correct {
+      border-color: var(--up);
+      background: var(--up-bg);
+      color: var(--up);
+      font-weight: 600;
+    }
+
+    .opt.wrong {
+      border-color: var(--faded);
+      background: var(--faded-bg);
+      color: var(--faded);
+      font-weight: 600;
+    }
+
+    .opt:disabled {
+      cursor: default;
+    }
+
+    .quiz-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .submit-btn {
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 7px;
+      padding: 10px 22px;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .submit-btn:not(:disabled):hover {
+      transform: translateY(-1px);
+    }
+
+    .skip-link {
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text-faint);
+      background: none;
+      border: none;
+      border-bottom: 1px dashed var(--border-strong);
+      padding: 0 0 1px;
+      cursor: pointer;
+    }
+
+    .skip-link:hover {
+      color: var(--text-light);
+    }
+
+    /* result strip after submit */
+    .result-strip {
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin-bottom: 36px;
+      background: var(--subtle);
+    }
+
+    .result-score {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 11px;
+    }
+
+    .result-score .ok {
+      color: var(--up);
+    }
+
+    .result-item {
+      font-size: 13px;
+      color: var(--text-light);
+      line-height: 1.72;
+    }
+
+    .result-item .ok {
+      color: var(--up);
+      font-weight: 600;
+    }
+
+    .result-item .no {
+      color: var(--faded);
+      font-weight: 600;
+    }
+
+    .result-note {
+      font-size: 13px;
+      color: var(--text);
+      margin-top: 9px;
+      padding-top: 9px;
+      border-top: 1px solid var(--border);
+    }
+
     /* ── Sort filter ────────────────────────────── */
     .sort-bar {
       display: flex;
@@ -708,6 +896,100 @@
       return names.slice(0, max).join(", ") + " 외 " + (names.length - max) + "개";
     }
 
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = a[i];
+        a[i] = a[j];
+        a[j] = tmp;
+      }
+      return a;
+    }
+
+    function pickOptions(correct, pool, n) {
+      n = n || 4;
+      const distract = shuffle(pool.filter((x) => x !== correct)).slice(0, n - 1);
+      return shuffle(distract.concat(correct));
+    }
+
+    function buildQuiz(topics) {
+      const allNames = topics.map((t) => t.name);
+      const qs = [];
+      const maxT = topics.slice().sort((a, b) => b.current - a.current)[0];
+      if (maxT) qs.push({ text: "이번주 당신이 가장 많이 다룬 토픽은?", correct: maxT.name, opts: pickOptions(maxT.name, allNames) });
+
+      const faded = topics.filter((t) => t.current === 0 && t.baseline_avg > 0);
+      if (faded.length) {
+        const pool = topics.filter((t) => t.current > 0).map((t) => t.name);
+        if (pool.length >= 1) qs.push({ text: "이번주 활동이 0이 된(사라진) 토픽은?", correct: faded[0].name, opts: pickOptions(faded[0].name, pool) });
+      }
+
+      const dropPool = topics.filter((t) => t.current > 0);
+      const dropT = dropPool.slice().sort((a, b) => a.current - a.baseline_avg - (b.current - b.baseline_avg))[0];
+      if (dropT && dropT.current - dropT.baseline_avg < 0) {
+        qs.push({ text: "직전 기준선 대비 가장 크게 줄어든 토픽은?", correct: dropT.name, opts: pickOptions(dropT.name, allNames) });
+      }
+      return qs.slice(0, 3);
+    }
+
+    function quizHtml(qs) {
+      return (
+        '<div class="quiz reveal" style="animation-delay:0.12s">' +
+        '<div class="quiz-kicker">예측 먼저</div>' +
+        '<div class="quiz-title">차트를 보기 전에, 먼저 맞혀보세요</div>' +
+        '<div class="quiz-intro">답을 보기 전에 예측하면 머리가 깨어납니다. 예측과 실제의 차이가 곧 “내가 나를 얼마나 아는가”입니다.</div>' +
+        qs
+          .map(
+            (q, qi) =>
+              '<div class="q">' +
+              '<div class="q-text">Q' + (qi + 1) + ". " + esc(q.text) + "</div>" +
+              '<div class="q-opts">' +
+              q.opts.map((name) => '<button class="opt" data-qi="' + qi + '" data-name="' + esc(name) + '">' + esc(name) + "</button>").join("") +
+              "</div></div>"
+          )
+          .join("") +
+        '<div class="quiz-actions">' +
+        '<button class="submit-btn" id="quizSubmit" disabled>결과 보기</button>' +
+        '<button class="skip-link" id="quizSkip">예측 없이 바로 볼게요</button>' +
+        "</div></div>"
+      );
+    }
+
+    function resultStrip(qs, answers) {
+      let score = 0;
+      const items = qs.map((q, qi) => {
+        const sel = answers[qi];
+        const ok = sel === q.correct;
+        if (ok) score++;
+        document.querySelectorAll('.opt[data-qi="' + qi + '"]').forEach((b) => {
+          b.disabled = true;
+          if (b.dataset.name === q.correct) b.classList.add("correct");
+          else if (b.dataset.name === sel) b.classList.add("wrong");
+        });
+        return { q, sel, ok };
+      });
+      const allRight = score === qs.length;
+      return (
+        '<div class="result-strip reveal">' +
+        '<div class="result-score">' + qs.length + "개 중 <span class=\"" + (allRight ? "ok" : "") + '">' + score + "개</span> 예측 적중</div>" +
+        items
+          .map(
+            (it) =>
+              '<div class="result-item">' +
+              (it.ok ? '<span class="ok">✓ 적중</span>' : '<span class="no">✗ 빗나감</span>') +
+              " — " + esc(it.q.text) + " 정답: <b>" + esc(it.q.correct) + "</b>" +
+              (it.ok ? "" : " (당신의 답: " + esc(it.sel) + ")") +
+              "</div>"
+          )
+          .join("") +
+        (allRight
+          ? '<div class="result-note">자기 학습 흐름을 정확히 보고 있습니다.</div>'
+          : '<div class="result-note">빗나간 항목이 지금 당신이 못 보고 있던 자리입니다. 거기서부터 한 번 들여다보세요.</div>') +
+        "</div>"
+      );
+    }
+
     function rowHtml(t, maxVal, animate, idx) {
       const st = classify(t.current, t.baseline_avg);
       const meta = STATUS[st];
@@ -813,6 +1095,19 @@
           .join("") +
         "</div>";
 
+      // ?reveal=1 또는 #reveal → 퀴즈 게이트 건너뛰기 (에이전트 스크린샷·공유용)
+      const skipGate = new URLSearchParams(location.search).has("reveal") || location.hash === "#reveal";
+      const qs = skipGate ? [] : buildQuiz(topics);
+      const gated = !skipGate && qs.length > 0;
+
+      const reportHtml =
+        summaryHtml +
+        '<div class="kpi-grid">' + kpiHtml + "</div>" +
+        '<div class="section-head"><h2 class="section-title">토픽 변화량</h2></div>' +
+        '<p class="section-desc">' + baseDef + "</p>" +
+        sortHtml +
+        '<div class="drift" id="drift"></div>';
+
       document.getElementById("root").innerHTML =
         '<span class="doc-icon reveal">📊</span>' +
         '<h1 class="title reveal" style="animation-delay:0.03s">학습 리포트</h1>' +
@@ -824,22 +1119,16 @@
         '<span class="chip">생성 ' + esc(m.generated_at || "") + "</span>" +
         "</div>" +
         '<hr class="divider" />' +
-        summaryHtml +
-        '<div class="kpi-grid">' + kpiHtml + "</div>" +
-        '<div class="section-head"><h2 class="section-title">토픽 변화량</h2></div>' +
-        '<p class="section-desc">' + baseDef + "</p>" +
-        sortHtml +
-        '<div class="drift" id="drift"></div>' +
+        '<div id="gate">' + (gated ? quizHtml(qs) : "") + "</div>" +
+        '<div id="report"' + (gated ? " hidden" : "") + ">" + reportHtml + "</div>" +
         '<div class="footer reveal" style="animation-delay:0.55s">' +
         "<span>데이터 출처: " + esc(m.source || "—") + "</span>" +
         '<span>learning-report · 단일 HTML 템플릿</span>' +
         "</div>";
 
       // ── 정렬 가능한 드리프트 리스트 ──
-      const driftEl = document.getElementById("drift");
-      let activeSort = "drift";
       function renderRows(key, animate) {
-        activeSort = key;
+        const driftEl = document.getElementById("drift");
         const sorted = topics.slice().sort(SORTS[key].fn);
         driftEl.innerHTML = sorted.map((t, i) => rowHtml(t, maxVal, animate, i)).join("");
         document.querySelectorAll(".sort-btn").forEach((b) => b.classList.toggle("active", b.dataset.sort === key));
@@ -848,7 +1137,28 @@
       document.querySelectorAll(".sort-btn").forEach((b) => {
         b.addEventListener("click", () => renderRows(b.dataset.sort, false));
       });
-      renderRows("drift", true);
+
+      function reveal(stripHtml) {
+        document.getElementById("gate").innerHTML = stripHtml || "";
+        document.getElementById("report").hidden = false;
+        renderRows("drift", true);
+      }
+
+      if (!gated) {
+        renderRows("drift", true);
+      } else {
+        const answers = {};
+        document.querySelectorAll(".opt").forEach((b) => {
+          b.addEventListener("click", () => {
+            const qi = b.dataset.qi;
+            answers[qi] = b.dataset.name;
+            document.querySelectorAll('.opt[data-qi="' + qi + '"]').forEach((o) => o.classList.toggle("selected", o === b));
+            if (Object.keys(answers).length === qs.length) document.getElementById("quizSubmit").disabled = false;
+          });
+        });
+        document.getElementById("quizSubmit").addEventListener("click", () => reveal(resultStrip(qs, answers)));
+        document.getElementById("quizSkip").addEventListener("click", () => reveal(""));
+      }
     }
 
     function renderError(msg) {
