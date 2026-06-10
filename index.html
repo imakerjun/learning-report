@@ -167,6 +167,90 @@
       margin-bottom: 20px;
     }
 
+    /* ── Analysis summary ───────────────────────── */
+    .summary {
+      display: flex;
+      gap: 13px;
+      background: var(--subtle);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin-bottom: 36px;
+    }
+
+    .summary-icon {
+      font-size: 18px;
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+
+    .summary-text {
+      font-size: 14.5px;
+      line-height: 1.62;
+      color: var(--text);
+    }
+
+    .summary-text b {
+      font-weight: 600;
+    }
+
+    .summary-text .up {
+      color: var(--up);
+      font-weight: 600;
+    }
+    .summary-text .down {
+      color: var(--down);
+      font-weight: 600;
+    }
+    .summary-text .faded {
+      color: var(--faded);
+      font-weight: 600;
+    }
+    .summary-text .new {
+      color: var(--new);
+      font-weight: 600;
+    }
+
+    /* ── Sort filter ────────────────────────────── */
+    .sort-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .sort-bar .sort-label {
+      font-size: 12.5px;
+      color: var(--text-faint);
+      margin-right: 3px;
+    }
+
+    .sort-btn {
+      font-family: inherit;
+      font-size: 12.5px;
+      color: var(--text-light);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 11px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .sort-btn:hover {
+      background: var(--subtle);
+      color: var(--text);
+    }
+
+    .sort-btn.active {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+      font-weight: 600;
+    }
+
     /* ── KPI cards ──────────────────────────────── */
     .kpi-grid {
       display: grid;
@@ -609,20 +693,64 @@
       return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     }
 
-    function pct(n) {
-      return Math.round(n * 100) + "%";
+    const SORTS = {
+      drift: { label: "변화량 큰 순", fn: (a, b) => Math.abs(b.current - b.baseline_avg) - Math.abs(a.current - a.baseline_avg) },
+      current: { label: "이번주 빈도", fn: (a, b) => b.current - a.current },
+      delta: { label: "증가→감소", fn: (a, b) => b.current - b.baseline_avg - (a.current - a.baseline_avg) },
+      name: { label: "이름순", fn: (a, b) => a.name.localeCompare(b.name, "ko") },
+    };
+
+    function nameList(arr, max) {
+      max = max || 2;
+      if (!arr.length) return "없음";
+      const names = arr.map((t) => t.name);
+      if (names.length <= max) return names.join(", ");
+      return names.slice(0, max).join(", ") + " 외 " + (names.length - max) + "개";
+    }
+
+    function rowHtml(t, maxVal, animate, idx) {
+      const st = classify(t.current, t.baseline_avg);
+      const meta = STATUS[st];
+      const diff = t.current - t.baseline_avg;
+      const fillW = (t.current / maxVal) * 100;
+      const baseLeft = (t.baseline_avg / maxVal) * 100;
+      const fillCls = st === "new" ? "new" : st === "down" || st === "drop" ? "down" : st === "flat" ? "flat" : "up";
+      const showBase = t.baseline_avg > 0;
+      const diffStr = st === "new" ? "신규" : st === "faded" ? "−" + t.baseline_avg : (diff >= 0 ? "+" : "") + diff;
+      const rev = animate ? " reveal" : "";
+      const delay = animate ? ' style="animation-delay:' + (0.18 + idx * 0.045) + 's"' : "";
+      return (
+        '<div class="drift-row' + rev + (st === "faded" ? " is-faded" : "") + '"' + delay + ">" +
+        '<div class="topic-name" title="' + esc(t.name) + '">' + esc(t.name) + "</div>" +
+        '<div class="track-wrap">' +
+        '<div class="track">' +
+        '<div class="fill ' + fillCls + '" data-w="' + fillW.toFixed(1) + '"></div>' +
+        (showBase ? '<div class="baseline-mark" data-base="' + t.baseline_avg + '" style="left:' + baseLeft.toFixed(1) + '%"></div>' : "") +
+        "</div>" +
+        '<span class="cur-num">' + t.current + "</span>" +
+        sparkline(t.trend) +
+        "</div>" +
+        '<span class="badge ' + meta.cls + '">' + meta.arrow + " " + meta.label + " " + diffStr + "</span>" +
+        "</div>"
+      );
+    }
+
+    function applyFills() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.querySelectorAll(".fill").forEach((el) => {
+            el.style.width = el.dataset.w + "%";
+          });
+        });
+      });
     }
 
     function render(data) {
       const m = data.meta || {};
-      const s = data.signals || {};
       const topics = (data.topics || []).slice();
       const maxVal = Math.max(1, ...topics.map((t) => Math.max(t.current, t.baseline_avg)));
 
-      // sort by absolute drift desc — 변화량이 본체
-      topics.sort((a, b) => Math.abs(b.current - b.baseline_avg) - Math.abs(a.current - a.baseline_avg));
-
-      // 합성 점수 대신, 데이터에서 직접 읽히는 사실 기반 하이라이트
+      // ── 사실 추출 (정렬과 무관하게 데이터에서 직접) ──
       const newOnes = topics.filter((t) => t.baseline_avg === 0 && t.current > 0);
       const fadedOnes = topics.filter((t) => t.current === 0 && t.baseline_avg > 0);
       const existing = topics.filter((t) => t.baseline_avg > 0 && t.current > 0);
@@ -631,23 +759,14 @@
       const topUpD = topUp ? topUp.current - topUp.baseline_avg : 0;
       const topDown = byDelta[byDelta.length - 1];
       const topDownD = topDown ? topDown.current - topDown.baseline_avg : 0;
-      const names = (arr) => (arr.length ? arr.map((t) => t.name).join(", ") : "없음");
+      const rose = topics.filter((t) => t.current - t.baseline_avg > 0).length;
+      const fell = topics.filter((t) => t.current - t.baseline_avg < 0).length;
 
       const kpis = [
-        { label: "✦ 새로 등장", big: newOnes.length + "개", accent: "new-accent", sub: names(newOnes) },
-        { label: "✕ 사라짐", big: fadedOnes.length + "개", accent: "faded-accent", sub: names(fadedOnes) },
-        {
-          label: "▲ 가장 크게 늘어난",
-          big: topUp && topUpD > 0 ? "+" + topUpD : "—",
-          accent: "up-accent",
-          sub: topUp && topUpD > 0 ? topUp.name : "없음",
-        },
-        {
-          label: "▼ 가장 크게 줄어든",
-          big: topDown && topDownD < 0 ? "" + topDownD : "—",
-          accent: "down-accent",
-          sub: topDown && topDownD < 0 ? topDown.name : "없음",
-        },
+        { label: "✦ 새로 등장", big: newOnes.length + "개", accent: "new-accent", sub: newOnes.length ? nameList(newOnes) : "없음" },
+        { label: "✕ 사라짐", big: fadedOnes.length + "개", accent: "faded-accent", sub: fadedOnes.length ? nameList(fadedOnes) : "없음" },
+        { label: "▲ 가장 크게 늘어난", big: topUp && topUpD > 0 ? "+" + topUpD : "—", accent: "up-accent", sub: topUp && topUpD > 0 ? topUp.name : "없음" },
+        { label: "▼ 가장 크게 줄어든", big: topDown && topDownD < 0 ? "" + topDownD : "—", accent: "down-accent", sub: topDown && topDownD < 0 ? topDown.name : "없음" },
       ];
 
       const kpiHtml = kpis
@@ -661,38 +780,38 @@
         )
         .join("");
 
-      const rowsHtml = topics
-        .map((t, i) => {
-          const st = classify(t.current, t.baseline_avg);
-          const meta = STATUS[st];
-          const diff = t.current - t.baseline_avg;
-          const fillW = (t.current / maxVal) * 100;
-          const baseLeft = (t.baseline_avg / maxVal) * 100;
-          const fillCls = st === "new" ? "new" : st === "faded" || st === "down" || st === "drop" ? (st === "down" || st === "drop" ? "down" : "down") : st === "flat" ? "flat" : "up";
-          const showBase = t.baseline_avg > 0;
-          const diffStr = st === "new" ? "신규" : st === "faded" ? "−" + t.baseline_avg : (diff >= 0 ? "+" : "") + diff;
-          return (
-            '<div class="drift-row reveal ' + (st === "faded" ? "is-faded" : "") + '" style="animation-delay:' + (0.18 + i * 0.045) + 's">' +
-            '<div class="topic-name" title="' + esc(t.name) + '">' + esc(t.name) + "</div>" +
-            '<div class="track-wrap">' +
-            '<div class="track">' +
-            '<div class="fill ' + fillCls + '" data-w="' + fillW.toFixed(1) + '"></div>' +
-            (showBase ? '<div class="baseline-mark" data-base="' + t.baseline_avg + '" style="left:' + baseLeft.toFixed(1) + '%"></div>' : "") +
-            "</div>" +
-            '<span class="cur-num">' + t.current + "</span>" +
-            sparkline(t.trend) +
-            "</div>" +
-            '<span class="badge ' + meta.cls + '">' + meta.arrow + " " + meta.label + " " + diffStr + "</span>" +
-            "</div>"
-          );
-        })
-        .join("");
+      // ── 분석 단락 (평가/합성 없이 데이터 사실만 엮음) ──
+      const sp = [];
+      sp.push("이번주(<b>" + esc(m.current_week || "—") + "</b>) 관심 토픽 <b>" + topics.length + "개</b>를 " + esc(m.baseline_label || "직전 평균") + "과 견줬다.");
+      const clauses = [];
+      if (newOnes.length) clauses.push('<span class="new">' + esc(nameList(newOnes)) + "</span> " + newOnes.length + "개가 새로 등장했고");
+      if (fadedOnes.length) clauses.push('<span class="faded">' + esc(nameList(fadedOnes)) + "</span> " + fadedOnes.length + "개가 사라졌다");
+      if (clauses.length) sp.push(clauses.join(", ") + ".");
+      if (topUp && topUpD > 0) {
+        let mv = '가장 크게 늘어난 토픽은 <span class="up">' + esc(topUp.name) + " (+" + topUpD + ")</span>";
+        if (topDown && topDownD < 0) mv += ', 가장 크게 줄어든 토픽은 <span class="down">' + esc(topDown.name) + " (" + topDownD + ")</span>";
+        sp.push(mv + "다.");
+      }
+      sp.push("전체적으로 <b>증가·신규 " + rose + "개</b>, <b>감소·소멸 " + fell + "개</b>로 관심사가 움직였다.");
+      const summaryHtml =
+        '<div class="summary reveal" style="animation-delay:0.12s">' +
+        '<span class="summary-icon">🧭</span>' +
+        '<div class="summary-text">' + sp.join(" ") + "</div>" +
+        "</div>";
 
       const baseWeeks = m.baseline_weeks || 4;
       const baseDef =
         "막대 = 이번주 등장 빈도 · 점선 = 기준선(직전 " +
         baseWeeks +
-        "주간 주당 평균 등장 횟수) · 둘의 간격이 곧 이동(drift)이다. 변화량 큰 순으로 정렬.";
+        "주간 주당 평균 등장 횟수) · 둘의 간격이 곧 이동(drift)이다.";
+
+      const sortHtml =
+        '<div class="sort-bar reveal" style="animation-delay:0.2s">' +
+        '<span class="sort-label">정렬</span>' +
+        Object.keys(SORTS)
+          .map((k) => '<button class="sort-btn" data-sort="' + k + '">' + SORTS[k].label + "</button>")
+          .join("") +
+        "</div>";
 
       document.getElementById("root").innerHTML =
         '<span class="doc-icon reveal">📊</span>' +
@@ -705,23 +824,31 @@
         '<span class="chip">생성 ' + esc(m.generated_at || "") + "</span>" +
         "</div>" +
         '<hr class="divider" />' +
+        summaryHtml +
         '<div class="kpi-grid">' + kpiHtml + "</div>" +
         '<div class="section-head"><h2 class="section-title">토픽 변화량</h2></div>' +
         '<p class="section-desc">' + baseDef + "</p>" +
-        '<div class="drift">' + rowsHtml + "</div>" +
+        sortHtml +
+        '<div class="drift" id="drift"></div>' +
         '<div class="footer reveal" style="animation-delay:0.55s">' +
         "<span>데이터 출처: " + esc(m.source || "—") + "</span>" +
         '<span>learning-report · 단일 HTML 템플릿</span>' +
         "</div>";
 
-      // animate fills after paint
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          document.querySelectorAll(".fill").forEach((el) => {
-            el.style.width = el.dataset.w + "%";
-          });
-        });
+      // ── 정렬 가능한 드리프트 리스트 ──
+      const driftEl = document.getElementById("drift");
+      let activeSort = "drift";
+      function renderRows(key, animate) {
+        activeSort = key;
+        const sorted = topics.slice().sort(SORTS[key].fn);
+        driftEl.innerHTML = sorted.map((t, i) => rowHtml(t, maxVal, animate, i)).join("");
+        document.querySelectorAll(".sort-btn").forEach((b) => b.classList.toggle("active", b.dataset.sort === key));
+        applyFills();
+      }
+      document.querySelectorAll(".sort-btn").forEach((b) => {
+        b.addEventListener("click", () => renderRows(b.dataset.sort, false));
       });
+      renderRows("drift", true);
     }
 
     function renderError(msg) {
