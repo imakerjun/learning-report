@@ -5,7 +5,8 @@
 에이전트는 아래 절차를 **순서대로** 수행한다.
 
 > 핵심 원칙: 에이전트는 **데이터만 깔고, 해석은 사람에게 돌려준다.**
-> `reflection.user_answer`는 절대 채우지 않는다. 질문만 던진다.
+> 합성 점수("학습 강도 0.72" 같은)를 지어내지 않는다. 화면의 모든 카드는
+> 토픽 데이터에서 직접 계산된 사실(이름·증감 수치)뿐이다.
 > 이것이 "Read LLM"이 아니라 "Read Less with LLM"이다.
 
 ---
@@ -48,28 +49,19 @@ cd learning-report
     "generated_at": "2026-06-10",
     "source": "데이터를 어디서 뽑았는지 한 줄"
   },
-  "signals": {
-    "learning_strength": { "value": 0.0-1.0, "label": "강함|보통|약함", "delta": 베이스라인대비증감, "hint": "한 줄" },
-    "weekly_change": { "value": 0.0-1.0, "hint": "토픽 분포 이동량 (0=정지, 1=완전이동)" },
-    "new_topics": 정수,
-    "faded_topics": 정수
-  },
   "topics": [
     { "name": "토픽명", "current": 정수, "baseline_avg": 정수, "trend": [수,수,수,수,수] }
-  ],
-  "reflection": {
-    "agent_question": "이번주 변화 중 사람이 직접 답해야 할 한 가지 질문",
-    "user_answer": ""
-  }
+  ]
 }
 ```
 
 **필드 산출 가이드**
-- `weekly_change`: 이번주 토픽 분포 벡터와 베이스라인 분포 벡터의 거리(0~1 정규화). 어림값이어도 됨.
-- `new_topics`: `baseline_avg == 0 && current > 0`인 토픽 수.
-- `faded_topics`: `current == 0 && baseline_avg > 0`인 토픽 수. **가장 흥미로운 신호.**
-- `agent_question`: 보통 **사라졌거나 급변한 토픽**을 짚어 "의도한 전환인가, 놓친 부분인가?"를 묻는다.
-- `user_answer`: **반드시 빈 문자열 `""`로 둔다.** 에이전트가 채우면 실험 자체가 무의미해진다.
+- `current`: 이번주(current_week) 해당 토픽 등장 횟수.
+- `baseline_avg`: **직전 N주간 주당 평균 등장 횟수.** (예: 직전 4주에 48번 → 12) 이 값이 화면의 점선 위치이자 비교 기준선이다.
+- `trend`: 최근 5개 주차 값. 스파크라인에 쓰임.
+- 화면 상단 4개 카드(새로 등장·사라짐·가장 큰 증가·가장 큰 감소)와 정렬은 모두
+  `current` vs `baseline_avg`에서 **자동 계산**된다. 별도 필드 불필요.
+- **가장 흥미로운 신호는 `current == 0 && baseline_avg > 0`(사라짐)** 이다. 본인이 가장 못 보는 자료다.
 
 ### 4. 정적 서버 실행
 ```bash
@@ -95,9 +87,9 @@ cloudflared tunnel --url http://localhost:8080
 ## 체크리스트 (에이전트 self-check)
 
 - [ ] `data/report.json`을 생성했는가 (sample.json을 수정한 게 아니라)
-- [ ] `reflection.user_answer`를 빈 문자열로 두었는가
+- [ ] 합성 점수를 지어내지 않았는가 (모든 값은 실제 빈도 카운트)
+- [ ] `baseline_avg`가 합계가 아니라 **주당 평균**인가
 - [ ] 토픽이 6~10개인가 (너무 많으면 화면이 흐려짐)
-- [ ] `faded_topics`가 1개 이상이면 그것을 `agent_question`에 반영했는가
 - [ ] http로 serve했는가 (file://로는 fetch가 막힌다)
 - [ ] URL + 스크린샷 둘 다 전달했는가
 
@@ -107,7 +99,8 @@ cloudflared tunnel --url http://localhost:8080
 
 - **변화량이 본체**: 빈도 순이 아니라 `|current − baseline_avg|` 순으로 정렬된다.
   본인이 가장 못 보는 자료는 "사라진 토픽"이다.
-- **에이전트는 답을 주지 않는다**: 결론을 뽑아주는 대신 질문을 되돌려준다.
-  화면을 보고 사람이 직접 답을 적을 때 머리가 쓰인다.
+- **에이전트는 합성 결론을 만들지 않는다**: "학습 강도 0.72" 같은 지어낸 점수 대신,
+  데이터에서 직접 읽히는 사실(어떤 토픽이 새로 떴고 무엇이 사라졌는가)만 보여준다.
+  해석은 화면을 보는 사람의 몫이다.
 - **단일 HTML · CDN 최소화**: clone → serve → screenshot 경로에서 실패 지점을 0에 가깝게.
   차트 라이브러리 없이 손으로 쓴 CSS + 인라인 SVG로 렌더한다.

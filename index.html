@@ -234,6 +234,22 @@
     .kpi.new-accent .kpi-value {
       color: var(--new);
     }
+    .kpi.up-accent .kpi-value {
+      color: var(--up);
+    }
+    .kpi.down-accent .kpi-value {
+      color: var(--down);
+    }
+    .kpi-sub {
+      font-size: 12.5px;
+      color: var(--text-light);
+      margin-top: 9px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
 
     /* ── Drift list ─────────────────────────────── */
     .drift {
@@ -606,26 +622,32 @@
       // sort by absolute drift desc — 변화량이 본체
       topics.sort((a, b) => Math.abs(b.current - b.baseline_avg) - Math.abs(a.current - a.baseline_avg));
 
-      const ls = s.learning_strength || {};
-      const lsUp = (ls.delta || 0) >= 0;
+      // 합성 점수 대신, 데이터에서 직접 읽히는 사실 기반 하이라이트
+      const newOnes = topics.filter((t) => t.baseline_avg === 0 && t.current > 0);
+      const fadedOnes = topics.filter((t) => t.current === 0 && t.baseline_avg > 0);
+      const existing = topics.filter((t) => t.baseline_avg > 0 && t.current > 0);
+      const byDelta = existing.slice().sort((a, b) => b.current - b.baseline_avg - (a.current - a.baseline_avg));
+      const topUp = byDelta[0];
+      const topUpD = topUp ? topUp.current - topUp.baseline_avg : 0;
+      const topDown = byDelta[byDelta.length - 1];
+      const topDownD = topDown ? topDown.current - topDown.baseline_avg : 0;
+      const names = (arr) => (arr.length ? arr.map((t) => t.name).join(", ") : "없음");
 
       const kpis = [
+        { label: "✦ 새로 등장", big: newOnes.length + "개", accent: "new-accent", sub: names(newOnes) },
+        { label: "✕ 사라짐", big: fadedOnes.length + "개", accent: "faded-accent", sub: names(fadedOnes) },
         {
-          label: "📈 학습 신호 강도",
-          value: ls.label || "—",
-          unit: ls.value != null ? ls.value.toFixed(2) : "",
-          delta: ls.delta != null ? (lsUp ? "▲ +" : "▼ ") + Math.abs(ls.delta).toFixed(2) : "",
-          deltaCls: lsUp ? "up" : "down",
+          label: "▲ 가장 크게 늘어난",
+          big: topUp && topUpD > 0 ? "+" + topUpD : "—",
+          accent: "up-accent",
+          sub: topUp && topUpD > 0 ? topUp.name : "없음",
         },
         {
-          label: "🔀 주간 변화율",
-          value: s.weekly_change ? pct(s.weekly_change.value) : "—",
-          unit: "",
-          delta: "정지 0% · 완전이동 100%",
-          deltaCls: "",
+          label: "▼ 가장 크게 줄어든",
+          big: topDown && topDownD < 0 ? "" + topDownD : "—",
+          accent: "down-accent",
+          sub: topDown && topDownD < 0 ? topDown.name : "없음",
         },
-        { label: "✦ 새로 등장한 토픽", value: s.new_topics ?? 0, unit: "개", delta: "", deltaCls: "", accent: "new-accent" },
-        { label: "✕ 사라진 토픽", value: s.faded_topics ?? 0, unit: "개", delta: "이번주 0회", deltaCls: "", accent: "faded-accent" },
       ];
 
       const kpiHtml = kpis
@@ -633,8 +655,8 @@
           (k, i) =>
             '<div class="kpi reveal ' + (k.accent || "") + '" style="animation-delay:' + (0.05 + i * 0.04) + 's">' +
             '<div class="kpi-label">' + k.label + "</div>" +
-            '<div class="kpi-value">' + esc(k.value) + (k.unit ? '<span class="unit">' + esc(k.unit) + "</span>" : "") + "</div>" +
-            (k.delta ? '<div class="kpi-delta ' + k.deltaCls + '">' + esc(k.delta) + "</div>" : "") +
+            '<div class="kpi-value">' + esc(k.big) + "</div>" +
+            '<div class="kpi-sub">' + esc(k.sub) + "</div>" +
             "</div>"
         )
         .join("");
@@ -666,18 +688,11 @@
         })
         .join("");
 
-      const r = data.reflection || {};
-      const answered = r.user_answer && r.user_answer.trim();
-      const calloutHtml =
-        '<div class="callout reveal" style="animation-delay:0.5s">' +
-        '<div class="callout-icon">💬</div>' +
-        '<div class="callout-body">' +
-        '<div class="callout-kicker">에이전트가 던지는 질문</div>' +
-        '<div class="callout-q">' + esc(r.agent_question || "이번주 변화 중 의도하지 않은 것이 있는가?") + "</div>" +
-        '<div class="answer-label">내 답 (직접 적는다)</div>' +
-        '<div class="answer-box ' + (answered ? "" : "empty") + '">' +
-        (answered ? esc(r.user_answer) : "여기에 본인 언어로 답을 적어보세요. 에이전트는 질문만 던집니다.") +
-        "</div></div></div>";
+      const baseWeeks = m.baseline_weeks || 4;
+      const baseDef =
+        "막대 = 이번주 등장 빈도 · 점선 = 기준선(직전 " +
+        baseWeeks +
+        "주간 주당 평균 등장 횟수) · 둘의 간격이 곧 이동(drift)이다. 변화량 큰 순으로 정렬.";
 
       document.getElementById("root").innerHTML =
         '<span class="doc-icon reveal">📊</span>' +
@@ -692,9 +707,8 @@
         '<hr class="divider" />' +
         '<div class="kpi-grid">' + kpiHtml + "</div>" +
         '<div class="section-head"><h2 class="section-title">토픽 변화량</h2></div>' +
-        '<p class="section-desc">막대 = 이번주 빈도 · 점선 = 기준선 위치 · 막대와 점선의 간격이 곧 이동(drift)이다.</p>' +
+        '<p class="section-desc">' + baseDef + "</p>" +
         '<div class="drift">' + rowsHtml + "</div>" +
-        calloutHtml +
         '<div class="footer reveal" style="animation-delay:0.55s">' +
         "<span>데이터 출처: " + esc(m.source || "—") + "</span>" +
         '<span>learning-report · 단일 HTML 템플릿</span>' +
